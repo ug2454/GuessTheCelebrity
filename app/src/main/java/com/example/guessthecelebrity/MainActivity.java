@@ -3,9 +3,14 @@ package com.example.guessthecelebrity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +19,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,6 +28,58 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> celebrityURL = new ArrayList<>();
     ArrayList<String> celebrityName = new ArrayList<>();
     ImageView imageView;
+    Random random = new Random();
+    Button button;
+    Button button1;
+    Button button2;
+    Button button3;
+    Button button4;
+    int locationOfCorrectAnswer;
+    ArrayList<Integer> result = new ArrayList<>();
+    int randomImageNumber;
+
+    public void updateUI() {
+        button1 = findViewById(R.id.button);
+        button2 = findViewById(R.id.button2);
+        button3 = findViewById(R.id.button3);
+        button4 = findViewById(R.id.button4);
+        randomImageNumber = random.nextInt(100) + 1;
+        locationOfCorrectAnswer = random.nextInt(4);
+        for (int i = 0; i < 4; i++) {
+            if (i == locationOfCorrectAnswer) {
+                result.add(randomImageNumber);
+            } else {
+                int wrongAnswer = random.nextInt(100) + 1;
+                if (randomImageNumber == wrongAnswer) {
+                    wrongAnswer = random.nextInt(100) + 1;
+                }
+                result.add(wrongAnswer);
+
+            }
+        }
+
+        Picasso.with(this).load(celebrityURL.get(randomImageNumber)).into(imageView);
+        button1.setText(celebrityName.get(result.get(0)));
+        button2.setText(celebrityName.get(result.get(1)));
+        button3.setText(celebrityName.get(result.get(2)));
+        button4.setText(celebrityName.get(result.get(3)));
+
+    }
+
+    public void selectCelebrity(View view) {
+
+        button = (Button) view;
+
+        if (button.getText().equals(celebrityName.get(randomImageNumber))) {
+            Toast.makeText(this, "You got it right!", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Correct answer is " + celebrityName.get(randomImageNumber), Toast.LENGTH_SHORT).show();
+        }
+        result.clear();
+        updateUI();
+
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,12 +88,12 @@ public class MainActivity extends AppCompatActivity {
         imageView = findViewById(R.id.imageView);
         Pattern pattern;
         Matcher matcher;
+
         DownloadWebContent task = new DownloadWebContent();
         String result = "";
         try {
-            result = task.execute("https://www.forbes.com/celebrities/").get();
-            Log.i("result",result);
-
+            result = task.execute("https://www.imdb.com/list/ls052283250/").get();
+            Log.i("result", result);
 
 
         } catch (ExecutionException e) {
@@ -45,27 +102,33 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-//        try {
-//            result = task.execute("https://www.forbes.com/celebrities/").get();
-//            pattern = Pattern.compile("&quot;(.*?)&quot");
-//            matcher = pattern.matcher(result);
-//            while (matcher.find()){
-//                celebrityURL.add(matcher.group(1));
-//            }
-//            result = task.execute("").get();
-//            pattern = Pattern.compile("<span class=\"profile-info__item profile-info__item--name\">(.*?)</span>");
-//            matcher = pattern.matcher(result);
-//            while (matcher.find()){
-//                celebrityName.add(matcher.group(1));
-//            }
-//
-//            System.out.println(celebrityName);
-//            System.out.println(celebrityURL);
-//        } catch (ExecutionException e) {
-//            e.printStackTrace();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        pattern = Pattern.compile("src=\"(.*?)\"");
+        matcher = pattern.matcher(result);
+        while (matcher.find()) {
+
+            celebrityURL.add(matcher.group(1));
+        }
+
+        pattern = Pattern.compile("<img alt=\"(.*?)\"");
+        matcher = pattern.matcher(result);
+        while (matcher.find()) {
+
+            celebrityName.add(matcher.group(1));
+        }
+
+        System.out.println(celebrityName.size());
+
+        System.out.println(celebrityURL.size());
+        celebrityURL.remove(0);
+        celebrityURL.remove(1);
+        celebrityURL.remove(2);
+        celebrityURL.remove(3);
+        celebrityURL.remove(4);
+        System.out.println(celebrityURL.size());
+
+
+
+        updateUI();
 
 
     }
